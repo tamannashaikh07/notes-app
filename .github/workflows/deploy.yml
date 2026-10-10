@@ -1,4 +1,4 @@
-```yaml
+
 name: Docker Image CI
 
 on:
@@ -27,16 +27,15 @@ jobs:
       - name: Build and push Frontend image
         uses: docker/build-push-action@v6
         with:
-          context: ./Frontend
-          file: ./Frontend/Dockerfile
+          context: ./frontend
+          file: ./frontend/Dockerfile
           push: true
           tags: tamanna077/notes-app-frontend:latest
 
       - name: Build and push Backend image
         uses: docker/build-push-action@v6
         with:
-          context: ./Backend
-          file: ./Backend/Dockerfile
+          context: ./backend
+          file: ./backend/Dockerfile
           push: true
           tags: tamanna077/notes-app-backend:latest
-```
