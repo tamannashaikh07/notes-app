@@ -1,0 +1,93 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #171717;
+  background: #f6f5f2;
+}
+
+body { min-width: 320px; }
+button, input, textarea, select { font: inherit; }
+button { cursor: pointer; border: 0; }
+
+.app { max-width: 1080px; margin: auto; padding: 48px 22px 70px; }
+
+.header { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 34px; }
+.eyebrow { color: #8a8a84; font-size: 11px; font-weight: 800; letter-spacing: .14em; margin-bottom: 7px; }
+.header h1 { font-size: clamp(30px, 5vw, 42px); letter-spacing: -.04em; }
+.subtitle { color: #777772; margin-top: 7px; }
+
+.add-btn, .save-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: #171717; color: white; border-radius: 9px; padding: 12px 17px;
+}
+.add-btn:hover, .save-btn:hover { background: #333; }
+
+.toolbar { display: flex; justify-content: space-between; gap: 15px; margin-bottom: 22px; }
+.filters { display: flex; gap: 7px; }
+.filters button {
+  background: #fff; border: 1px solid #e4e3df; color: #666; border-radius: 20px; padding: 8px 15px;
+}
+.filters button.active { background: #171717; border-color: #171717; color: #fff; }
+
+.search {
+  display: flex; align-items: center; gap: 8px; background: #fff;
+  border: 1px solid #e4e3df; border-radius: 9px; padding: 0 12px; width: 250px; color: #999;
+}
+.search input { width: 100%; border: 0; outline: 0; padding: 10px 0; background: transparent; }
+
+.error { background: #fff0f0; color: #a33; border: 1px solid #f2cccc; padding: 11px 14px; border-radius: 8px; margin-bottom: 18px; }
+
+.notes-container { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+
+.note-card {
+  background: #fff; border: 1px solid #e6e4df; border-radius: 13px;
+  padding: 21px; min-height: 185px; display: flex; flex-direction: column;
+}
+.note-header { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.note-header h2 { font-size: 19px; letter-spacing: -.02em; }
+.content { color: #6d6d68; line-height: 1.55; margin: 14px 0 25px; white-space: pre-wrap; }
+.note-footer { margin-top: auto; display: flex; justify-content: space-between; align-items: center; }
+
+.priority { font-size: 11px; font-weight: 800; text-transform: uppercase; border-radius: 20px; padding: 5px 9px; }
+.priority.low { background: #e9f8ed; color: #21713b; }
+.priority.medium { background: #fff5d8; color: #8b6500; }
+.priority.high { background: #ffe9e7; color: #a3342b; }
+
+.status-btn, .delete-btn {
+  display: inline-flex; align-items: center; gap: 6px; border-radius: 7px; padding: 7px 10px;
+}
+.status-btn.pending { background: #f2f2ef; color: #666; }
+.status-btn.completed { background: #e9f8ed; color: #21713b; }
+.delete-btn { background: #fff0ef; color: #a3342b; }
+
+.empty {
+  grid-column: 1 / -1; background: #fff; border: 1px dashed #d7d5ce;
+  border-radius: 13px; text-align: center; padding: 70px 20px;
+}
+.empty p { color: #85857f; margin-top: 7px; }
+
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.42); display: flex;
+  align-items: center; justify-content: center; padding: 20px; z-index: 10;
+}
+.modal { width: min(500px, 100%); background: #fff; border-radius: 15px; padding: 25px; box-shadow: 0 20px 70px rgba(0,0,0,.2); }
+.modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 22px; }
+.modal-header h2 { font-size: 24px; }
+.icon-btn { background: transparent; color: #777; padding: 4px; }
+.modal form { display: flex; flex-direction: column; gap: 8px; }
+.modal label { margin-top: 7px; font-size: 13px; font-weight: 750; }
+.modal input, .modal textarea, .modal select {
+  width: 100%; border: 1px solid #deddd8; border-radius: 8px; padding: 11px; outline: none; background: #fff;
+}
+.modal input:focus, .modal textarea:focus, .modal select:focus { border-color: #777; }
+.modal textarea { resize: vertical; }
+.form-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 14px; }
+.cancel-btn { background: #eee; color: #333; border-radius: 8px; padding: 10px 15px; }
+
+@media (max-width: 720px) {
+  .header, .toolbar { align-items: stretch; flex-direction: column; }
+  .add-btn { width: 100%; }
+  .search { width: 100%; }
+  .notes-container { grid-template-columns: 1fr; }
+}
