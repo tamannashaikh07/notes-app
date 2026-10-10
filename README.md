@@ -7,6 +7,7 @@ A simple full-stack Notes application built with:
 - FastAPI
 - SQLAlchemy
 - MySQL
+- gitHub Actions
 
 ## Features
 
