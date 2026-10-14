@@ -39,3 +39,25 @@ jobs:
           file: ./backend/Dockerfile
           push: true
           tags: tamanna077/notes-app-backend:latest
+                
+      - name: Deploy to AWS EC2
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_PASSWORD }}"
+
+            docker pull tamanna077/notes-app-frontend:latest
+
+            docker stop myapp || true
+            docker rm myapp || true
+
+            docker run -d \
+              --name myapp \
+              --restart unless-stopped \
+              -p 5173:5173 \
+              YOUR_DOCKERHUB_USERNAME/YOUR_IMAGE_NAME:latest
+
+            docker logout
