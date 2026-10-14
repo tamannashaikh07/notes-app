@@ -58,6 +58,6 @@ jobs:
               --name myapp \
               --restart unless-stopped \
               -p 5173:5173 \
-              tamanna077 /notes-app-frontend:latest
+              tamanna077/notes-app-frontend:latest
 
             docker logout
