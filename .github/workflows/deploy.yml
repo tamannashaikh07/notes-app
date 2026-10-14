@@ -41,7 +41,7 @@ jobs:
           tags: tamanna077/notes-app-backend:latest
                 
       - name: Deploy to AWS EC2
-        uses: appleboy/ssh-action@v1.2.2
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
@@ -60,4 +60,4 @@ jobs:
               -p 5173:5173 \
               ${{ secrets.DOCKER_NAME }}/notes-app-frontend:latest
 
-            docker logout
+            
