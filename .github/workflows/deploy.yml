@@ -31,13 +31,14 @@ jobs:
         id: npm-cache
         uses: actions/cache@v4
         with:
-          path: /node_module
+          path: notes-app/frontend/node_module
           key: ${{ runner.os }}-npm-$${{ hashFiles('package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-npm-
 
 # Check for cache hit or miss, and install
       - name: Install dependencies
+        working-directory: notes-app-frontend
         if: steps.npm-cache.outputs.cache-hit != 'true'
         run: |
          echo "Cache MISS: Installing dependencies from scrates..."
