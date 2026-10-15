@@ -38,7 +38,7 @@ jobs:
 
 # Check for cache hit or miss, and install
       - name: Install dependencies
-        working-directory: notes-app-frontend
+        working-directory: ./notes-app/notes-app/frontend
         if: steps.npm-cache.outputs.cache-hit != 'true'
         run: |
          echo "Cache MISS: Installing dependencies from scrates..."
