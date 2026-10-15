@@ -1,10 +1,12 @@
-```yaml
+
 name: Docker Image CI
 
 on:
   push:
     branches:
       - main
+    paths:
+     - 'scr/NoteCard.jsx'
   workflow_dispatch:
 
 permissions:
@@ -18,6 +20,46 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+# Set up Node.js Environment
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          
+# Cache npm dependencies using a custom key
+      - name: Cache npm dependencies
+        id: npm-cache
+        uses: actions/cache@v4
+        with:
+          path: /node_module
+          key: ${{ runner.os }}-npm-$${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+# Check for cache hit or miss, and install
+      - name: Install dependencies
+        if: steps.npm-cache.outputs.cache-hit != 'true'
+        run: |
+         echo "Cache MISS: Installing dependencies from scrates..."
+         npm ci
+
+      - name: Print Cache Status
+        if: steps.npm-cache.outputs.cache-hit == 'true'
+        run: |
+         echo "Cache HIT: Skipping npm install!"
+
+# Build your production asssets (e.g., outputs to a 'dist' or 'build' folder)
+      #- name: Build Application 
+      #  run: npm run build
+
+# STRATEGY APPLIED: Upload the built static files
+     # - name: Upload Build Artifacts
+       # uses: actions/upload-artifact@v4
+       # with:
+         # - name: frontend build
+           # path:
+           
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
@@ -27,16 +69,38 @@ jobs:
       - name: Build and push Frontend image
         uses: docker/build-push-action@v6
         with:
-          context: ./Frontend
-          file: ./Frontend/Dockerfile
+          context: ./frontend
+          file: ./frontend/Dockerfile
           push: true
           tags: tamanna077/notes-app-frontend:latest
 
       - name: Build and push Backend image
         uses: docker/build-push-action@v6
         with:
-          context: ./Backend
-          file: ./Backend/Dockerfile
+          context: ./backend
+          file: ./backend/Dockerfile
           push: true
           tags: tamanna077/notes-app-backend:latest
-```
+                
+      - name: Deploy to AWS EC2
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_PASSWORD }}"
+
+            docker pull ${{ secrets.DOCKER_USERNAME }}/notes-app-frontend:latest
+
+            docker stop myapp || true
+            docker rm myapp || true
+
+            docker run -d \
+              --name myapp \
+              --restart unless-stopped \
+              -p 5173:5173 \
+              tamanna077/notes-app-frontend:latest
+
+            
