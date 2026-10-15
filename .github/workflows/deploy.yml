@@ -20,6 +20,46 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+# Set up Node.js Environment
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          
+# Cache npm dependencies using a custom key
+      - name: Cache npm dependencies
+        id: npm-cache
+        uses: actions/cache@v4
+        with:
+          path: /node_module
+          key: ${{ runner.os }}-npm-$${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+# Check for cache hit or miss, and install
+      - name: Install dependencies
+        if: steps.npm-cache.outputs.cache-hit != 'true'
+        run: |
+         echo "Cache MISS: Installing dependencies from scrates..."
+         npm ci
+
+      - name: Print Cache Status
+        if: steps.npm-cache.outputs.cache-hit == 'true'
+        run: |
+         echo "Cache HIT: Skipping npm install!"
+
+# Build your production asssets (e.g., outputs to a 'dist' or 'build' folder)
+      #- name: Build Application 
+      #  run: npm run build
+
+# STRATEGY APPLIED: Upload the built static files
+     # - name: Upload Build Artifacts
+       # uses: actions/upload-artifact@v4
+       # with:
+         # - name: frontend build
+           # path:
+           
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
