@@ -50,15 +50,16 @@ jobs:
          echo "Cache HIT: Skipping npm install!"
 
 # Build your production asssets (e.g., outputs to a 'dist' or 'build' folder)
-      #- name: Build Application 
-      #  run: npm run build
+       - name: Build Application 
+         run: npm run build
 
 # STRATEGY APPLIED: Upload the built static files
-     # - name: Upload Build Artifacts
-       # uses: actions/upload-artifact@v4
-       # with:
-         # - name: frontend build
-           # path:
+       - name: Upload Build Artifacts
+         uses: actions/upload-artifact@v4
+         with:
+          - name: frontend build
+            path: dist/ #Change to 'build/' if using Create React App
+            retention-days: 5
            
 
       - name: Log in to Docker Hub
