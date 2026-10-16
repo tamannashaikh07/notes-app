@@ -1,4 +1,3 @@
-
 name: Docker Image CI
 
 on:
@@ -9,8 +8,6 @@ on:
      - 'scr/NoteCard.jsx'
   workflow_dispatch:
 
-permissions:
-  contents: read
 
 jobs:
   docker-publish:
