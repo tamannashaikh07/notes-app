@@ -51,6 +51,7 @@ jobs:
 
 # Build your production asssets (e.g., outputs to a 'dist' or 'build' folder)
       - name: Build Application 
+        working-directory: ./frontend
         run: npm run build
 
 # STRATEGY APPLIED: Upload the built static files
