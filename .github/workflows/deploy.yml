@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'src/App.jsx'  
+      - 'scr/NoteCard.jjsx'  
   workflow_dispatch:
 
 jobs:
@@ -30,16 +30,18 @@ jobs:
         id: npm-cache
         uses: actions/cache@v4
         with:
-          path: node_modules
+          path: frontend/package-lock.json
           key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-npm-
 
       - name: Install dependencies
+        working-directory: ./frontend
         if: steps.npm-cache.outputs.cache-hit != 'true'
         run: npm ci
 
       - name: Build Application (Matrix Validation Only)
+        working-directory: ./frontend
         run: npm run build
 
   build:
@@ -59,15 +61,17 @@ jobs:
         id: npm-cache
         uses: actions/cache@v4
         with:
-          path: node_modules
+          path: frontend/package-lock.json
           key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
 
       - name: Install dependencies
+        working-directory: ./frontend
         if: steps.npm-cache.outputs.cache-hit != 'true'
         run: npm ci
           
       # Build official production assets
       - name: Build Application
+        working-directory: ./frontend
         run: npm run build
         
       - name: Upload Build Artifact
@@ -88,9 +92,9 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: ./frontend
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/frontend:latest
+          tags: tamanna077/notes-app-frontend:latest
 
   deploy:
     runs-on: ubuntu-latest
@@ -109,11 +113,11 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            docker pull ${{ secrets.DOCKER_USERNAME }}/frontend:latest
-            docker stop frontend || true
-            docker rm frontend || true
+            docker pull ${{ secrets.DOCKER_USERNAME }}/notes-app-frontend:latest
+            docker stop myapp || true
+            docker rm myapp || true
             docker run -d \
-              --name frontend \
+              --name myapp \
               --restart unless-stopped \
-              -p 3000:80 \
-              ${{ secrets.DOCKER_USERNAME }}/frontend:latest
+              -p 5173:5173 \
+              tamanna077/notes-app-frontend:latest
