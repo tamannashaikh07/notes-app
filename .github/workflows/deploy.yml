@@ -1,103 +1,119 @@
-
-name: Docker Image CI
+name: Frontend Deployment
 
 on:
   push:
     branches:
       - main
     paths:
-     -'scr/NoteCard.jsx'
+      - 'src/App.jsx'  
   workflow_dispatch:
 
 jobs:
-  # Job 1: Test frontend on multiple operating systems
-  test:
-    name: Test on ${{ matrix.os }}
+  # JOB 1: Test multi-OS compatibility WITHOUT Docker
+  validate:
     runs-on: ${{ matrix.os }}
-
     strategy:
-      fail-fast: false
       matrix:
-        os:
-          - ubuntu-latest
-          - windows-latest
-          - macos-latest
-
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [20, 22]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+        
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Cache npm dependencies
+        id: npm-cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
 
       - name: Install dependencies
-        working-directory: ./frontend
+        if: steps.npm-cache.outputs.cache-hit != 'true'
         run: npm ci
 
-      - name: Build frontend
-        working-directory: ./frontend
+      - name: Build Application (Matrix Validation Only)
         run: npm run build
 
-  # Job 2: Build and push Docker images
-  docker-publish:
-    name: Build and Push Docker Images
-    runs-on: ubuntu-latest
-    needs: test
-
+  build:
+    runs-on: ubuntu-latest  # Hardcoded to Linux (fixes the missing macOS executable error)
+    needs: validate         # Ensures this only runs if validation passes
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
 
-      - name: Log in to Docker Hub
+      - name: Cache npm dependencies
+        id: npm-cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.npm-cache.outputs.cache-hit != 'true'
+        run: npm ci
+          
+      # Build official production assets
+      - name: Build Application
+        run: npm run build
+        
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: dist/
+          retention-days: 5
+          
+      # Docker Login (Will execute safely on ubuntu-latest)
+      - name: Docker login
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Frontend image
+      # Build & Push production image
+      - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: ./frontend
-          file: ./frontend/Dockerfile
+          context: .
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/notes-app-frontend:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/frontend:latest
 
-      - name: Build and push Backend image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./backend
-          file: ./backend/Dockerfile
-          push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/notes-app-backend:latest
-
-  # Job 3: Deploy frontend to AWS EC2
   deploy:
-    name: Deploy to AWS EC2
     runs-on: ubuntu-latest
-    needs: docker-publish
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-
+    needs: build
     steps:
-      - name: Deploy frontend container
-        uses: appleboy/ssh-action@v1.2.5
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: ./download-assets
+  
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_PASSWORD }}"
-
-            docker pull ${{ secrets.DOCKER_USERNAME }}/notes-app-frontend:latest
-
-            docker stop myapp || true
-            docker rm myapp || true
-
+            docker pull ${{ secrets.DOCKER_USERNAME }}/frontend:latest
+            docker stop frontend || true
+            docker rm frontend || true
             docker run -d \
-              --name myapp \
+              --name frontend \
               --restart unless-stopped \
-              -p 5173:5173 \
-              ${{ secrets.DOCKER_USERNAME }}/notes-app-frontend:latest
+              -p 3000:80 \
+              ${{ secrets.DOCKER_USERNAME }}/frontend:latest
