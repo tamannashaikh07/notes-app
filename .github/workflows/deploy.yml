@@ -1,3 +1,4 @@
+
 name: Docker Image CI
 
 on:
@@ -5,68 +6,51 @@ on:
     branches:
       - main
     paths:
-     - 'scr/NoteCard.jsx'
+     -'scr/NoteCard.jsx'
   workflow_dispatch:
 
-
 jobs:
-  docker-publish:
-   # Run on multiple operating systems 
- test: 
-   name: Test on ${{ matrix.os }}
-   runs-on: ${{ matrix.os }}
+  # Job 1: Test frontend on multiple operating systems
+  test:
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
 
-   strategy:
-    matrix: 
-     os: [ubuntu-latest, windows-lastest, macos-latest]
-  
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-# Set up Node.js Environment
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          
-# Cache npm dependencies using a custom key
-      - name: Cache npm dependencies
-        id: npm-cache
-        uses: actions/cache@v4
-        with:
-          path: frontend/package-lock.json
-          key: ${{ runner.os }}-npm-$${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-npm-
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
 
-# Check for cache hit or miss, and install
       - name: Install dependencies
         working-directory: ./frontend
-        if: steps.npm-cache.outputs.cache-hit != 'true'
-        run: |
-         echo "Cache MISS: Installing dependencies from scrates..."
-         npm ci
+        run: npm ci
 
-      - name: Print Cache Status
-        if: steps.npm-cache.outputs.cache-hit == 'true'
-        run: |
-         echo "Cache HIT: Skipping npm install!"
-
-# Build your production asssets (e.g., outputs to a 'dist' or 'build' folder)
-      - name: Build Application 
+      - name: Build frontend
         working-directory: ./frontend
         run: npm run build
 
-# STRATEGY APPLIED: Upload the built static files
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-         name: frontend build
-         path: dist/ #Change to 'build/' if using Create React App
-         retention-days: 5
-           
+  # Job 2: Build and push Docker images
+  docker-publish:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -80,7 +64,7 @@ jobs:
           context: ./frontend
           file: ./frontend/Dockerfile
           push: true
-          tags: tamanna077/notes-app-frontend:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/notes-app-frontend:latest
 
       - name: Build and push Backend image
         uses: docker/build-push-action@v6
@@ -88,10 +72,17 @@ jobs:
           context: ./backend
           file: ./backend/Dockerfile
           push: true
-          tags: tamanna077/notes-app-backend:latest
-                
-      - name: Deploy to AWS EC2
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+          tags: ${{ secrets.DOCKER_USERNAME }}/notes-app-backend:latest
+
+  # Job 3: Deploy frontend to AWS EC2
+  deploy:
+    name: Deploy to AWS EC2
+    runs-on: ubuntu-latest
+    needs: docker-publish
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Deploy frontend container
         uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -109,6 +100,4 @@ jobs:
               --name myapp \
               --restart unless-stopped \
               -p 5173:5173 \
-              tamanna077/notes-app-frontend:latest
-
-            
+              ${{ secrets.DOCKER_USERNAME }}/notes-app-frontend:latest
