@@ -115,5 +115,5 @@ jobs:
             docker run -d \
               --name frontend \
               --restart unless-stopped \
-              -p 3000:80 \
+              -p 5173:5173 \
               ${{ secrets.DOCKER_USERNAME }}/frontend:latest
