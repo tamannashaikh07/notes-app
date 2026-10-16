@@ -14,7 +14,15 @@ permissions:
 
 jobs:
   docker-publish:
-    runs-on: ubuntu-latest
+   # Run on multiple operating systems 
+ test: 
+   name: Test on ${{ matrix.os }}
+   runs-on: ${{ matrix.os }}
+
+   strategy:
+    matrix: 
+     os: [ubuntu-latest, windows-lastest, macos-latest]
+  
 
     steps:
       - name: Checkout code
