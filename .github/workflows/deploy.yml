@@ -8,7 +8,7 @@ on:
       - 'frontend/**'
       - 'src/**'
       - '.github/workflows/deploy.yml'
-     tags:
+    tags:
       - 'v*.*.*'
   workflow_dispatch:
 
