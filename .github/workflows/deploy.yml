@@ -115,28 +115,24 @@ jobs:
 
 
  
+  # NEW JOB: Github Release
+  
   release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
+
+ # NEW: srif version tag push hone par release create hoga
     if: startsWith(github.ref, 'refs/tags/v')
     permissions:
       contents: write
 
     steps:
-      - name: Debug trigger
-        run: |
-          echo "Event: $GITHUB_EVENT_NAME"
-          echo "Ref: $GITHUB_REF"
-          echo "Ref name: $GITHUB_REF_NAME"
-
       - name: Checkout code
         uses: actions/checkout@v4
 
+ # NEW: Automatically Github Release create karega 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
           generate_release_notes: true
-          token: ${{ secrets.GITHUB_TOKEN }}
-
           
